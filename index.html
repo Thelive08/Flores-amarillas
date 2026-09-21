@@ -149,20 +149,24 @@
     z-index:3;
   }
 
-  .tulip{
+  .tulip-slot{
     position:absolute;
+    transform-origin:bottom center;
+  }
+
+  .tulip{
+    position:relative;
     display:flex;
     flex-direction:column;
     align-items:center;
     transform-origin:bottom center;
-    animation:sprout 1s cubic-bezier(.34,1.56,.64,1) both;
+    animation:sprout 0.9s cubic-bezier(.34,1.56,.64,1) both;
   }
   @keyframes sprout{
     0%{ transform:scaleY(0) translateY(30px); opacity:0; }
     55%{ opacity:1; }
     100%{ transform:scaleY(1) translateY(0); opacity:1; }
   }
-  .tulip.back{ filter:blur(1.5px) brightness(0.85); }
 
   .t-leaf{
     position:absolute;
@@ -295,14 +299,10 @@
     buildTulips();
   }
 
-  function makeTulip(leftPct, bottomPct, scale, delay, isBack){
+  function makeTulip(delay){
     const t = document.createElement('div');
-    t.className = 'tulip' + (isBack ? ' back' : '');
-    t.style.left = leftPct + '%';
-    t.style.bottom = bottomPct + '%';
-    t.style.transform = 'scale(' + scale + ')';
+    t.className = 'tulip';
     t.style.animationDelay = delay + 's';
-    t.style.zIndex = isBack ? 1 : Math.round(10 + bottomPct);
 
     const cup = document.createElement('div');
     cup.className = 't-cup';
@@ -330,32 +330,53 @@
     return t;
   }
 
+  // Crea una fila de tulipanes a una profundidad dada (efecto punto de fuga)
+  function makeRow(field, opts){
+    const { bottom, scale, count, blur, bright, rowDelay, z } = opts;
+    const spacing = 100 / count;
+    // el "jitter" horizontal es mas chico mientras mas grande la flor (fila cercana), para que no se amontonen
+    const jitter = spacing * 0.28 * (1.3 - scale);
+
+    for(let i=0; i<count; i++){
+      const left = spacing * i + spacing/2 + (Math.random()*jitter*2 - jitter);
+
+      const slot = document.createElement('div');
+      slot.className = 'tulip-slot';
+      slot.style.left = left + '%';
+      slot.style.bottom = bottom + '%';
+      slot.style.transform = 'translateX(-50%) scale(' + scale + ')';
+      slot.style.zIndex = z;
+      if(blur > 0 || bright < 1){
+        slot.style.filter = 'blur(' + blur + 'px) brightness(' + bright + ')';
+      }
+
+      // las flores de atras brotan primero; las de adelante van "llegando" despues
+      const delay = rowDelay + Math.random()*0.25;
+      slot.appendChild(makeTulip(delay));
+      field.appendChild(slot);
+    }
+  }
+
   function buildTulips(){
     const field = document.getElementById('tulipField');
     if(field.dataset.built) return;
     field.dataset.built = "1";
 
     const isMobile = window.innerWidth < 640;
+    const density = isMobile ? 0.65 : 1;
 
-    // Fila de fondo: mas pequenas, difuminadas, mas arriba -> sensacion de profundidad
-    const backCount = isMobile ? 10 : 18;
-    for(let i=0; i<backCount; i++){
-      const left = Math.random()*100;
-      const bottom = 38 + Math.random()*22;
-      const scale = 0.55 + Math.random()*0.2;
-      const delay = Math.random()*0.6;
-      field.appendChild(makeTulip(left, bottom, scale, delay, true));
-    }
+    // Filas ordenadas de mas lejos (arriba, chicas, difusas) a mas cerca (abajo, grandes, nitidas)
+    // El brote va en el mismo orden: primero florece el fondo, luego se van "acercando"
+    const rows = [
+      { bottom:46, scale:0.32, count:Math.round(15*density), blur:2.2, bright:0.72, rowDelay:0.0,  z:1 },
+      { bottom:38, scale:0.42, count:Math.round(13*density), blur:1.6, bright:0.78, rowDelay:0.18, z:2 },
+      { bottom:29, scale:0.55, count:Math.round(11*density), blur:1.0, bright:0.85, rowDelay:0.36, z:3 },
+      { bottom:20, scale:0.72, count:Math.round(9*density),  blur:0.4, bright:0.92, rowDelay:0.54, z:4 },
+      { bottom:11, scale:0.92, count:Math.round(7*density),  blur:0,   bright:0.97, rowDelay:0.72, z:5 },
+      { bottom:0,  scale:1.15, count:Math.round(6*density),  blur:0,   bright:1,    rowDelay:0.9,  z:6 },
+    ];
 
-    // Fila delantera: grandes, nitidas, muy juntas, llenando la parte baja
-    const frontCount = isMobile ? 14 : 26;
-    for(let i=0; i<frontCount; i++){
-      const left = (i / frontCount) * 100 + (Math.random()*6 - 3);
-      const bottom = Math.random()*22;
-      const scale = 0.9 + Math.random()*0.5;
-      const delay = 0.3 + Math.random()*0.9;
-      field.appendChild(makeTulip(left, bottom, scale, delay, false));
-    }
+    rows.forEach(row => makeRow(field, row));
   }
 </script>
 </body>
