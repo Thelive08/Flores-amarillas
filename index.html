@@ -212,9 +212,39 @@
   @media (max-width:640px){
     .message{ top:4%; padding:14px 18px; }
   }
+
+  /* ---------- BRILLITOS CAYENDO ---------- */
+  .sparkle-layer{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:50;
+    overflow:hidden;
+  }
+  .sparkle{
+    position:absolute;
+    top:-12px;
+    border-radius:50%;
+    background:radial-gradient(circle, #ffffff 0%, #fff6c8 35%, #ffd400 70%, rgba(255,212,0,0) 100%);
+    box-shadow:0 0 6px 1px rgba(255, 230, 130, 0.9);
+    animation-name:sparkle-fall, sparkle-twinkle;
+    animation-timing-function:linear, ease-in-out;
+    animation-iteration-count:1, infinite;
+  }
+  @keyframes sparkle-fall{
+    from{ transform:translateY(0) rotate(0deg); }
+    to{ transform:translateY(115vh) rotate(360deg); }
+  }
+  @keyframes sparkle-twinkle{
+    0%,100%{ opacity:0.25; }
+    50%{ opacity:1; }
+  }
 </style>
 </head>
 <body>
+
+  <!-- CAPA DE BRILLITOS CAYENDO (sobre toda la pagina) -->
+  <div class="sparkle-layer" id="sparkleLayer"></div>
 
   <!-- PANTALLA 1: BIENVENIDA -->
   <div id="screen-hello" class="screen">
@@ -227,13 +257,37 @@
   <div id="screen-garden" class="screen">
     <div class="garden-wrap">
       <div class="message">
-        Eres una mujer de metas infinitas, con un alma noble y una personalidad radiante que transforma todo lo que toca.
+        Eres una mujer de carácter admirable, con un alma noble y una sensibilidad que ilumina y transforma todo lo que toca.
       </div>
       <div class="tulip-field" id="tulipField"></div>
     </div>
   </div>
 
 <script>
+  function spawnSparkle(){
+    const layer = document.getElementById('sparkleLayer');
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+
+    const size = 4 + Math.random()*7;
+    const left = Math.random()*100;
+    const fallDuration = 4 + Math.random()*4;
+    const twinkleDuration = 0.8 + Math.random()*1.2;
+    const delay = Math.random()*0.5;
+
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = left + '%';
+    s.style.animationDuration = fallDuration + 's, ' + twinkleDuration + 's';
+    s.style.animationDelay = delay + 's, 0s';
+
+    layer.appendChild(s);
+    setTimeout(() => s.remove(), (fallDuration + delay) * 1000 + 100);
+  }
+
+  setInterval(spawnSparkle, 220);
+  for(let i=0;i<15;i++){ setTimeout(spawnSparkle, i*120); }
+
   function goToGarden(){
     document.getElementById('screen-hello').classList.add('hidden');
     const garden = document.getElementById('screen-garden');
